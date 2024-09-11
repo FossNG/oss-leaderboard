@@ -1,0 +1,7 @@
+# This file was automatically generated
+name: dev
+type: postgres
+options:
+  host: osslab-dev-instance.local.tembo.io
+  port: 5432
+  database: postgres
