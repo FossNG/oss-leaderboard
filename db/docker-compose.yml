@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+
+  osslab-dev-instance:
+    platform: linux/amd64
+    build:
+      context: ./osslab-dev-instance
+    container_name: osslab-dev-instance
+    volumes:
+      - osslab-dev-instance-data:/var/lib/postgresql/data2
+    networks:
+      - tembo
+    labels:
+      - "traefik.enable=true"
+      # an 'A' record *.local.tembo.io is set to 127.0.0.1
+      # connect with TLS passthrough, SNI into local instance.
+      # TLS termination inside postgres container.
+      - "traefik.tcp.routers.osslab-dev-instance.rule=HostSNI(`osslab-dev-instance.local.tembo.io`)"
+      - "traefik.tcp.routers.osslab-dev-instance.entrypoints=postgresql"
+      - "traefik.tcp.routers.osslab-dev-instance.tls.passthrough=true"
+      - "traefik.tcp.services.osslab-dev-instance.loadbalancer.server.port=5432"
+
+
+  traefik:
+    image: traefik:v3.0.0-beta2
+    networks:
+      - tembo
+    command:
+      # Traefik can make routing rules by talking to
+      # Docker. We also connect Docker socket to container.
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # These are all the ports we can use for local dev
+      - "--entrypoints.ferretdb.address=:27018/tcp"
+      - "--entrypoints.postgresql.address=:5432/tcp"
+      - "--entrypoints.traefik.address=:9000/tcp"
+      - "--entrypoints.web.address=:8000/tcp"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      # This could be enabled with debug mode on
+      # - "--accesslog=true"
+      # - "--log.level=DEBUG"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    ports:
+      - "8000:8000"
+      # Traefik dashboard at http://localhost:9000/dashboard/
+      # helpful for troubleshooting Traefik configurations
+      - "9000:9000"
+      - "5432:5432"
+      # FerretDB port
+      - "27018:27018"
+
+networks:
+  tembo: {}
+
+volumes:
+
+  osslab-dev-instance-data:
+
