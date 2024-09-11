@@ -1,29 +1,36 @@
-create table users (
-    github_id varchar primary key,
-    score int,
-    email varchar not null,
-    created_at timestamp,
-    updated_at timestamp default NOW(),
+-- Users table stores basic user information
+CREATE TABLE users (
+    github_id VARCHAR PRIMARY KEY,
+    score INT DEFAULT 0, -- Defaulting score to 0 to avoid NULL
+    email VARCHAR NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
-create table projects (
-    project_url varchar primary key,
+-- Projects table to store project details
+CREATE TABLE projects (
+    project_url VARCHAR PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
-create table gh_stars (
-    project_id serial,
-    url varchar,
-    created_at timestamp,
-    updated_at timestamp,
-    total_commits int,
-    total_contributors int,
-    gh_stars int,
-    gh_stars_last_updated timestamp,
+-- GitHub Stars table storing stats about projects
+CREATE TABLE gh_stars (
+    project_id SERIAL PRIMARY KEY,
+    project_url VARCHAR REFERENCES projects(project_url) ON DELETE CASCADE, -- Foreign key reference to projects
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    total_commits INT,
+    total_contributors INT,
+    gh_stars INT,
+    gh_stars_last_updated TIMESTAMP DEFAULT NOW()
 );
 
-create table contributors (
-    github_id varchar
-    project_url varchar
-    foreign key github_id references users github_id
-    foreign key project_url references projects project_url
+-- Contributors table to track who contributed to what projects
+CREATE TABLE contributors (
+    github_id VARCHAR,
+    project_url VARCHAR,
+    FOREIGN KEY (github_id) REFERENCES users(github_id) ON DELETE CASCADE, -- Ensuring that users and projects are properly related
+    FOREIGN KEY (project_url) REFERENCES projects(project_url) ON DELETE CASCADE,
+    PRIMARY KEY (github_id, project_url)
 );
