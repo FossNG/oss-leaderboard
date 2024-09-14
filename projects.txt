@@ -1,0 +1,3 @@
+https://github.com/tembo-io/prometheus_fdw
+https://github.com/tembo-io/clerk_fdw
+https://github.com/tembo-io/orb_fdw

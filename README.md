@@ -11,6 +11,10 @@ We are building a leaderboard for open-source contributions of UC students. The 
 1. **Leaderboard:** Everyone can view the leaderboard with top contributors and their contributions
 1. **User Profile:** A page with detailed information on each contributor, the projects they contributed to, proficient languages, interests etc.
 
+## Track your contributions
+We track the github projects listed in the `projects.txt` file. To add your project and contributions, create a PR with the URL of each project in a new line. 
+NOTE: We only track public repositories
+
 ## Other considerations
 
 1. **Scoring Algorithm:** The score assigned to each contribution should be factor in the popularity, usefulness of the project. It should use indicators like stars, fork, # of contributors, age of commit, issues, PR reviews etc.
