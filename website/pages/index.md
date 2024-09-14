@@ -6,4 +6,4 @@ title: OSS Leaderboard
 select * from leaderboard;
 ```
 
-<DataTable data={leaderboard}/>
+<DataTable data={leaderboard} search=true rowShading=true link=user_link/>

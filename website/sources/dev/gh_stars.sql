@@ -1,0 +1,1 @@
+select * from gh_stars
