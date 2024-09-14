@@ -2,6 +2,8 @@
 name: dev
 type: postgres
 options:
-  host: osslab-dev-instance.local.tembo.io
+  host: finally-guided-jacamar.data-1.use1.tembo.io
   port: 5432
   database: postgres
+  ssl:
+    sslmode: no-verify
