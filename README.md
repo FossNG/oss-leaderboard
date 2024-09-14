@@ -25,27 +25,27 @@ We are building a leaderboard for open-source contributions of UC students. The 
 ### Architecture
 
 ```mermaid
-graph TD;
+graph LR;  
     subgraph Postgres
         A[Data] --> B[Processing]
+        B --> A 
     end;
 
     subgraph GitHub
         G1[Migrations]
-        G2[Website Markdown] -->|evidence.dev| E[Website]
+        G2[Markdown]
         G3[Projects]
     end;
 
-    Postgres -->|Markdown| D[Markdown Files];
-    D --> E;
-    E --> F[Users];
-    F --> Postgres;
-    Postgres --> E;
-    G3 --> Postgres;
-    G1 --> Postgres;
-    G2 --> Postgres;
-    G3 -->|PR| D;
-    E --> F;
+    A -.-> D[Evidence.dev]
+    G2 -.-> D
+    D --> E[Website];
+
+    F[Users] --> A;
+    E -->|Signup| F;
+    F --> |PR| G3;
+    G1 --> A;
+    G3 --> A;
 ```
 
 ## Schema Overview
