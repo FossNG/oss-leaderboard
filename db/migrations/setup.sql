@@ -17,7 +17,7 @@ CREATE TABLE projects (
 -- GitHub Stars table storing stats about projects
 CREATE TABLE gh_stars (
     project_id SERIAL PRIMARY KEY,
-    project_url VARCHAR REFERENCES projects(project_url) ON DELETE CASCADE, -- Foreign key reference to projects
+    project_url VARCHAR UNIQUE REFERENCES projects(project_url) ON DELETE CASCADE, -- Foreign key reference to projects
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     total_commits INT,
