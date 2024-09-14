@@ -18,9 +18,35 @@ We are building a leaderboard for open-source contributions of UC students. The 
 ## Technical specifications
 
 1. **Database:** Postgres via [Tembo](https://tembo.io/).
-1. **UI:**  Evidence.dev
+1. **UI:** Evidence.dev
 1. **Domain:** TBD
 1. **Hosting:** Evidence Cloud
+
+### Architecture
+
+```mermaid
+graph LR;  
+    subgraph Postgres
+        A[Data] --> B[Processing]
+        B --> A 
+    end;
+
+    subgraph GitHub
+        G1[Migrations]
+        G2[Markdown]
+        G3[Projects]
+    end;
+
+    A -.-> D[Evidence.dev]
+    G2 -.-> D
+    D --> E[Website];
+
+    F[Users] --> A;
+    E -->|Signup| F;
+    F --> |PR| G3;
+    G1 --> A;
+    G3 --> A;
+```
 
 ## Schema Overview
 
