@@ -7,41 +7,90 @@ CREATE OR REPLACE FUNCTION get_gh_stars()
 RETURNS VOID AS $$
     import requests
     from datetime import datetime
+    from urllib.parse import urlparse
+    import os
 
-    # Database connection via plpythonu
-    plpy.execute("SELECT project_url FROM projects WHERE project_url LIKE 'https://github.com/%'")
+    # Securely fetch GitHub credentials from environment variables
+    GITHUB_TOKEN = "" # Add token here 
+
+    headers = {}
+    if GITHUB_TOKEN:
+        headers['Authorization'] = f'token {GITHUB_TOKEN}'
+    else:
+        plpy.notice("GITHUB_TOKEN is not set. Proceeding with unauthenticated requests, which may be rate limited.")
+
+    # Fetch all GitHub project URLs from the projects table
     result = plpy.execute("SELECT project_url FROM projects WHERE project_url LIKE 'https://github.com/%'")
 
     for row in result:
         project_url = row['project_url']
-        api_url = project_url.replace("github.com", "api.github.com/repos")
-        # Adding authentication via environment variables (you can use your GitHub credentials or token)
-        client_id = "Jayko001"
-        # THIS NEEDS TO BE UPDATED
-        client_secret = "" 
         
-        if client_id and client_secret:
-            api_url += f"?client_id={client_id}&client_secret={client_secret}"
+        # Parse the URL to extract owner and repo
+        try:
+            parsed_url = urlparse(project_url)
+            path_parts = parsed_url.path.strip('/').split('/')
+            if len(path_parts) >= 2:
+                owner, repo = path_parts[0], path_parts[1]
+            else:
+                plpy.notice(f"Invalid project URL format: {project_url}")
+                continue
+        except Exception as e:
+            plpy.notice(f"Error parsing URL {project_url}: {e}")
+            continue
 
-        # Fetching data from GitHub API
-        response = requests.get(api_url)
-        
+        base_api_url = f"https://api.github.com/repos/{owner}/{repo}"
+
+        # Fetch the general project data (stars, forks, etc.)
+        response = requests.get(base_api_url, headers=headers)
+
         if response.status_code == 200:
             data = response.json()
-            
-            if 'stargazers_count' in data:
-                stars_count = data['stargazers_count']
-                # Update the gh_stars table with the fetched stars count
-                update_query = f"""
-                UPDATE gh_stars
-                SET gh_stars = {stars_count}, gh_stars_last_updated = NOW()
-                WHERE project_url = '{project_url}'
-                """
-                plpy.execute(update_query)
-            else:
-                plpy.notice(f"Stargazers count not found for {project_url}")
+
+            # Initialize variables to hold the stats
+            stars_count = data.get('stargazers_count', 0)
+            total_contributors = 0
+            total_commits = 0
+
+            # Fetch total contributors and commits with pagination
+            contributors_url = f"{base_api_url}/contributors"
+            page = 1
+            per_page = 100  # Max per GitHub API
+
+            while True:
+                paged_url = f"{contributors_url}?per_page={per_page}&page={page}"
+                contributors_response = requests.get(paged_url, headers=headers)
+
+                if contributors_response.status_code == 200:
+                    contributors_data = contributors_response.json()
+
+                    if not contributors_data:
+                        break  # No more contributors
+
+                    if isinstance(contributors_data, list):
+                        total_contributors += len(contributors_data)
+                        total_commits += sum(c.get('contributions', 0) for c in contributors_data if isinstance(c, dict))
+                    else:
+                        plpy.notice(f"Unexpected contributors data format for {project_url}")
+                        break
+                else:
+                    plpy.notice(f"Failed to fetch contributors data for {project_url} with status code {contributors_response.status_code}")
+                    break
+
+                page += 1  # Move to next page
+
+            # Update the gh_stars table with the fetched stars, total commits, and contributors count
+            upsert_query = f"""
+                INSERT INTO gh_stars (project_url, gh_stars, total_contributors, total_commits, gh_stars_last_updated)
+                VALUES ('{project_url}', {stars_count}, {total_contributors}, {total_commits}, NOW())
+                ON CONFLICT (project_url) DO UPDATE
+                SET gh_stars = EXCLUDED.gh_stars,
+                    total_contributors = EXCLUDED.total_contributors,
+                    total_commits = EXCLUDED.total_commits,
+                    gh_stars_last_updated = NOW();
+            """
+            plpy.execute(upsert_query)
         else:
-            plpy.notice(f"Failed to fetch data from {api_url} with status code {response.status_code}")
+            plpy.notice(f"Failed to fetch data from {base_api_url} with status code {response.status_code}")
 $$ LANGUAGE plpython3u;
 
 -- this function uses the contributors table to assign a score to each user
@@ -64,7 +113,7 @@ RETURNS VOID AS $$
         result = plpy.execute(query)
         total_stars = result[0]['total_stars']
         
-        # Update the user's score in the users table
+        # Update the users score in the users table
         update_query = f"""
         UPDATE users
         SET score = {total_stars}, updated_at = NOW()
