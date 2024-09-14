@@ -26,15 +26,24 @@ We are building a leaderboard for open-source contributions of UC students. The 
 
 ```mermaid
 graph TD;
-    A[Data] -->|Stored in| B[Postgres];
-    B -->|Processing| C[Processing Unit];
-    C --> B;
-    B -->|Markdown| D[Markdown Files];
+    subgraph Postgres
+        A[Data] --> B[Processing]
+    end;
+
+    subgraph GitHub
+        G1[Migrations]
+        G2[Website Markdown]
+        G3[Projects]
+    end;
+
+    Postgres -->|Markdown| D[Markdown Files];
     D --> E[Website];
     D --> F[Users];
     E -->|OR| F;
-    G[Github] -->|PR| D;
-    G -->|Migrations, Website, Projects| B;
+    GitHub -->|PR| D;
+    G1 --> Postgres;
+    G2 --> Postgres;
+    G3 --> Postgres;
 ```
 
 ## Schema Overview
