@@ -1,9 +1,0 @@
-{
-    "editor.acceptSuggestionOnEnter": false,
-    "editor.quickSuggestions": {
-        "other": true,
-        "comments": false,
-        "strings": false
-    },
-    "editor.quickSuggestionsDelay": 0
-}
