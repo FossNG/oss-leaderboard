@@ -32,18 +32,20 @@ graph TD;
 
     subgraph GitHub
         G1[Migrations]
-        G2[Website Markdown]
+        G2[Website Markdown] -->|evidence.dev| E[Website]
         G3[Projects]
     end;
 
     Postgres -->|Markdown| D[Markdown Files];
-    D --> E[Website];
-    D --> F[Users];
-    E -->|OR| F;
-    GitHub -->|PR| D;
+    D --> E;
+    E --> F[Users];
+    F --> Postgres;
+    Postgres --> E;
+    G3 --> Postgres;
     G1 --> Postgres;
     G2 --> Postgres;
-    G3 --> Postgres;
+    G3 -->|PR| D;
+    E --> F;
 ```
 
 ## Schema Overview
